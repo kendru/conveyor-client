@@ -1,0 +1,16 @@
+{
+  "name": "conveyor-client",
+  "version": "0.0.1",
+  "description": "A client for communicating with the Conveyor event sourcing engine via the HTTP/WebSocket interface'",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "event",
+    "sourcing",
+    "conveyor"
+  ],
+  "author": "Andrew Meredith <andrew@lambdasoftware.com>",
+  "license": "MIT"
+}
