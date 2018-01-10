@@ -1,6 +1,6 @@
 {
   "name": "conveyor-client",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A client for communicating with the Conveyor event sourcing engine via the HTTP/WebSocket interface'",
   "main": "lib/index.js",
   "scripts": {

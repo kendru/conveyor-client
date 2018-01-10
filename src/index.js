@@ -90,7 +90,7 @@ async function createFeed(conn, feed) {
 }
 
 async function emitToSubscribers(conn, event) {
-    const path = maybeStripSlash(event.feed)
+    const path = maybeStripSlash(event.feed).split('/')
     const subscribers = conn.subscribers.search(path)
     await Promise.all(subscribers.map(callback => callback(event)))
 }
