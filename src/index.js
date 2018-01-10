@@ -1,4 +1,5 @@
 const request = require('request-promise')
+const Trie = require('ds-trie')
 
 function maybeStripSlash(feed) {
     return (feed.charAt(0) === '/') ? feed.substring(1) : feed
@@ -70,7 +71,9 @@ function connection(host, port, isSecure) {
 
     return Object.freeze({
         host, port, isSecure,
-        baseUrl: `${proto}://${host}:${port}`
+        baseUrl: `${proto}://${host}:${port}`,
+        subscribers: new Trie(),
+        webhookUrl: null
     })
 }
 
@@ -86,24 +89,77 @@ async function createFeed(conn, feed) {
     return await httpPost(feedUrl(conn.baseUrl, feed))
 }
 
+async function emitToSubscribers(conn, event) {
+    const path = maybeStripSlash(event.feed)
+    const subscribers = conn.subscribers.search(path)
+    await Promise.all(subscribers.map(callback => callback(event)))
+}
+
 async function getWebhookSubscriptions(conn, url) {
     try {
-        return await httpGet(subscriberUrl(conn.baseUrl, url));
+        return await httpGet(subscriberUrl(conn.baseUrl, url))
     } catch (e) {
-        return [];
+        return []
     }
 }
 
-async function registerSubscriptionWebhook(conn, feed, url) {
-    return await httpPost(subscriptionsUrl(conn.baseUrl, feed), { url })
+async function registerSubscriptionWebhook(conn, feed) {
+    return await httpPost(subscriptionsUrl(conn.baseUrl, feed), { url: conn.webhookUrl })
 }
 
-async function cancelSubscriptionWebhook(conn, feed, url) {
-    return await httpDelete(subscriptionsUrl(conn.baseUrl, feed), { url })
+async function cancelSubscriptionWebhook(conn, feed) {
+    return await httpDelete(subscriptionsUrl(conn.baseUrl, feed), { url: conn.webhookUrl })
 }
 
-async function cancelAllSubscriptionWebhook(conn, url) {
-    return await httpDelete(subscriptionsUrl(conn.baseUrl), { url })
+async function cancelAllSubscriptionWebhook(conn) {
+    return await httpDelete(subscriptionsUrl(conn.baseUrl), { url: conn.webhookUrl })
+}
+
+async function subscribe(conn, feed, callback) {
+    const path = maybeStripSlash(feed).split('/')
+    if (conn.webhookUrl && conn.subscribers.search(path).length === 0) {
+        await registerSubscriptionWebhook(conn, feed)
+    }
+    conn.subscribers.addElement(path, callback)
+}
+
+async function unsubscribe(conn, feed, callback) {
+    const path = maybeStripSlash(feed).split('/')
+    conn.subscribers.removeElement(path, callback)
+    // Remove webhook subscription when last subscriber for that feed has been unsubscribed
+    if (conn.webhookUrl) {
+        const nodeForPath = conn.subscribers.walk(path)
+
+        if (!nodeForPath || // All subscribers for this feed and all sub-feeds have been removed
+            nodeForPath.elements.length === 0 // All subscribers for this feed have been removed, but subscribers still exist for sub-feeds
+        ) {
+            await cancelSubscriptionWebhook(conn, feed)
+        }
+    }
+}
+
+/**
+ * Register a subscription registration implementation
+ * 
+ * @param conn connection
+ * @param impl {Function} Factory function that takes the following functions
+ * as positional arguments:
+ * - emitToSubscribers(event): Callback to call when a message is received
+ * - cancelAllSubscriptionWebhook(): Callback to call on clean-up to re-register clean-up
+ * and returns a WebHook postback URL
+ */
+async function registerSubscriptionImpl(conn, impl) {
+    conn.webhookUrl = impl(emitToSubscribers.bind(null, conn), cancelAllSubscriptionWebhook.bind(null, conn))
+    const registeredFeeds = new Set()
+    for (let subscriber of conn.subscribers.entriesIter()) {
+        const [path, callback] = subscriber
+        const feed = path.join('/')
+        
+        if (!registeredFeeds.has(feed)) {
+            registeredFeeds.add(feed)
+            await registerSubscriptionWebhook(conn, feed)
+        }
+    }
 }
 
 async function emitEvent(conn, feed, event) {
@@ -152,11 +208,9 @@ function Client(host, port, isSecure) {
     return {
         getConnection: () => conn,
         createFeed: createFeed.bind(null, conn),
-        getFeed: getFeed.bind(null, conn),
-        getWebhookSubscriptions: getWebhookSubscriptions.bind(null, conn),
-        registerSubscriptionWebhook: registerSubscriptionWebhook.bind(null, conn),
-        cancelSubscriptionWebhook: cancelSubscriptionWebhook.bind(null, conn),
-        cancelAllSubscriptionWebhook: cancelAllSubscriptionWebhook.bind(null, conn),
+        subscribe: subscribe.bind(null, conn),
+        unsubscribe: unsubscribe.bind(null, conn),
+        registerSubscriptionImpl: registerSubscriptionImpl.bind(null, conn),
         getEvents: getEvents.bind(null, conn),
         emitEvent: emitEvent.bind(null, conn),
         withTransaction: withTransaction.bind(null, conn)
@@ -167,10 +221,9 @@ module.exports = {
     connection,
     createFeed,
     getFeed,
-    getWebhookSubscriptions,
-    registerSubscriptionWebhook,
-    cancelSubscriptionWebhook,
-    cancelAllSubscriptionWebhook,
+    subscribe,
+    unsubscribe,
+    registerSubscriptionImpl,
     getEvents,
     emitEvent,
     // TODO: Add support for emitting multiple events to the same feed

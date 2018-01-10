@@ -2,15 +2,27 @@
   "name": "conveyor-client",
   "version": "0.0.1",
   "description": "A client for communicating with the Conveyor event sourcing engine via the HTTP/WebSocket interface'",
-  "main": "index.js",
+  "main": "lib/index.js",
   "scripts": {
+    "build": "babel src/ --out-dir lib",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "event",
-    "sourcing",
+    "event sourcing",
     "conveyor"
   ],
   "author": "Andrew Meredith <andrew@lambdasoftware.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "ds-trie": "^1.0.5",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2",
+    "request-promise-native": "^1.0.5"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-es2017": "^6.24.1"
+  }
 }

@@ -1,3 +1,12 @@
+# Conveyor Client
+
+This module provides a client to the [Conveyor event sourcing engine](https://gitlab.com/lambda-software-solutions/conveyor)'s
+HTTP API. In order to use the subscriptions functionality, an adapter must
+be used for your web framework of choice.
+
+### Usage
+
+```
 const conveyor = require('../lib/index');
 
 (async () => {
@@ -25,3 +34,4 @@ const conveyor = require('../lib/index');
     const resp = await c.getEvents('/basic');
     console.log(JSON.stringify(resp.events, null, 3))
 })();
+```
