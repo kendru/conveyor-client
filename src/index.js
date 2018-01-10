@@ -69,12 +69,12 @@ async function httpPost(url, body = null, opts = {}) {
 function connection(host, port, isSecure) {
     const proto = 'http' + (isSecure ? 's' : '')
 
-    return Object.freeze({
+    return {
         host, port, isSecure,
         baseUrl: `${proto}://${host}:${port}`,
         subscribers: new Trie(),
         webhookUrl: null
-    })
+    }
 }
 
 async function getFeed(conn, feed) {

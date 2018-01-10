@@ -1,7 +1,7 @@
 const conveyor = require('../lib/index');
 
 (async () => {
-    const c = conveyor.Client('localhost', 3000, false)
+    const c = new conveyor.Client('localhost', 3000, false)
 
     console.log('Creating feed: /basic')
     await c.createFeed('/basic')

@@ -1,11 +1,12 @@
 {
   "name": "conveyor-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A client for communicating with the Conveyor event sourcing engine via the HTTP/WebSocket interface'",
   "main": "lib/index.js",
   "scripts": {
     "build": "babel src/ --out-dir lib",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublish": "npm run build"
   },
   "keywords": [
     "event sourcing",
