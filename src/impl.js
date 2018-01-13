@@ -81,10 +81,6 @@ async function getFeed(conn, feed) {
     return await httpGet(feedUrl(conn.baseUrl, feed))
 }
 
-async function getSubfeeds(conn, feed) {
-    return await httpGet(feedUrl(conn.baseUrl, feed) + '/feeds')
-}
-
 async function getEvents(conn, feed) {
     return await httpGet(eventsUrl(conn.baseUrl, feed))
 }
@@ -209,7 +205,6 @@ module.exports = {
     connection,
     createFeed,
     getFeed,
-    getSubfeeds,
     subscribe,
     unsubscribe,
     registerSubscriptionImpl,
