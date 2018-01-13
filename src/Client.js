@@ -8,6 +8,7 @@ function Client(host, port, isSecure) {
         getConnection: () => conn,
         createFeed: impl.createFeed.bind(null, conn),
         getFeed: impl.getFeed.bind(null, conn),
+        getSubfeeds: impl.getSubfeeds.bind(null, conn),
         subscribe: impl.subscribe.bind(null, conn),
         unsubscribe: impl.unsubscribe.bind(null, conn),
         registerSubscriptionImpl: impl.registerSubscriptionImpl.bind(null, conn),
