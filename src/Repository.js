@@ -49,6 +49,23 @@ class Repository {
 
         return model
     }
+
+    async fetchAll(ModelClass) {
+        const feed = await impl.getEvents(this[connection_], this[basePath_])
+        const eventsById = feed.events.reduce((byId, evt) => {
+            const path = evt.feed.split('/')
+            const id = path[path.length - 1]
+            
+            if (!byId[id]) {
+                byId[id] = new ModelClass()
+            }
+            byId[id].handle(evt.data)
+
+            return byId;
+        }, {})
+
+        return Object.values(eventsById)
+    }
 }
 
 module.exports = Repository
