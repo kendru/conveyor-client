@@ -8,6 +8,12 @@ class Model {
         }
     }
 
+    // For the base model class, we assume that each model has a unique
+    // primary key of "id". 
+    get primaryKey() {
+        return this.id;
+    }
+
     get unsavedEvents() {
         return this[unsavedEvents_]
     }

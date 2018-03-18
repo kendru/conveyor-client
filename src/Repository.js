@@ -18,6 +18,18 @@ class Repository {
         this[basePath_] = basePath
     }
 
+    get connection() {
+        return this[connection_]
+    }
+
+    get name() {
+        return this[name_]
+    }
+
+    get basePath() {
+        return this[basePath_]
+    }
+
     feedPath(id) {
         return `${this[basePath_]}/${id}`
     }
