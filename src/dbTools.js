@@ -79,6 +79,10 @@ function tblInsert(tbl, model) {
     genericInsert(tbl, model, m => m.primaryKey)
 }
 
+function tblRemove(tbl, idx) {
+    genericRemove(tbl, idx, m => m.primaryKey)
+}
+
 // If we were more concerned about efficiency in larger collections, we could
 // implement something like a b-tree. For now, we just use the same binary search
 // that we use for scanning a table.
@@ -114,8 +118,16 @@ function indexedTblLookup(tbl, idx, val) {
     return idxLookup(idx, val).map(pk => tblLookup(tbl, pk))
 }
 
+function removeFromAll(tbl, indexes, model) {
+    tblRemove(tbl, model.primaryKey);
+    for (const [idx, idxFn] of indexes) {
+        idxRemove(idx, model, idxFn);
+    }
+}
+
 module.exports = {
-    tblLookup, tblInsert,
+    tblLookup, tblInsert, tblRemove,
     idxLookup, idxInsert, idxRemove,
-    indexedTblLookup
+    indexedTblLookup,
+    removeFromAll
 }

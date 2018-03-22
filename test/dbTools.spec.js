@@ -52,6 +52,18 @@ describe('Database tools', () => {
             
             expect(tbl).to.eql(range(100).map(model))
         })
+
+        it('should remove a record from a table', () => {
+            const tbl = []
+            const r1 = model(1)
+            const r2 = model(2)
+
+            db.tblInsert(tbl, r2)
+            db.tblInsert(tbl, r1)
+            db.tblRemove(tbl, 1);
+
+            expect(tbl).to.eql([ r2 ])
+        })
     })
 
     describe('indexes', function () {
@@ -148,7 +160,7 @@ describe('Database tools', () => {
         })
     })
 
-    describe('indexed lookups', () => {
+    describe('table + index operations', () => {
         let tbl
         let idx
 
@@ -183,6 +195,13 @@ describe('Database tools', () => {
 
         it('should return empty for a nonexistent value', () => {
             expect(db.indexedTblLookup(tbl, idx, 'Carol')).to.eql([])
+        })
+
+        it('should remove a model from a table and all indexes', () => {
+            db.removeFromAll(tbl, [ [idx, byName] ], model(2, { name: 'Bob' }))
+    
+            expect(db.tblLookup(tbl, 2)).to.be.null
+            expect(db.idxLookup(idx, 'Bob')).to.eql([])
         })
     })
 })

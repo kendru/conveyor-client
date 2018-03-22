@@ -3,10 +3,11 @@ const impl = require('./impl')
 const connection_ = Symbol('connection')
 const name_ = Symbol('name')
 const basePath_ = Symbol('base-path')
+const ModelClass_ = Symbol('model-class')
 
 class Repository {
 
-    constructor(connectionOrClient, name, basePath) {
+    constructor(connectionOrClient, name, basePath, ModelClass) {
         if (connectionOrClient.getConnection) {
             // is Client
             this[connection_] = connectionOrClient.getConnection()
@@ -16,6 +17,7 @@ class Repository {
         }
         this[name_] = name
         this[basePath_] = basePath
+        this[ModelClass_] = ModelClass
     }
 
     get connection() {
@@ -48,35 +50,46 @@ class Repository {
         })
     }
 
-    async fetch(id, ModelClass) {
+    async fetch(id) {
         const feed = await impl.getEvents(this[connection_], this.feedPath(id))
         if (!feed.events.length) {
             return null
         }
 
         const events = feed.events.map(e => e.data)
-        const model = new ModelClass()
+        if (events.length && events[events.length - 1].type === 'deleted') {
+            return null
+        }
+        const model = new this[ModelClass_]()
         
         model.apply(events)
 
         return model
     }
 
-    async fetchAll(ModelClass) {
+    async fetchAll() {
         const feed = await impl.getEvents(this[connection_], this[basePath_])
         const eventsById = feed.events.reduce((byId, evt) => {
             const path = evt.feed.split('/')
             const id = path[path.length - 1]
+            if (evt.data.type === 'deleted') {
+                delete byId[id]
+                return byId
+            }
             
             if (!byId[id]) {
-                byId[id] = new ModelClass()
+                byId[id] = new this[ModelClass_]()
             }
             byId[id].handle(evt.data)
 
-            return byId;
+            return byId
         }, {})
 
         return Object.values(eventsById)
+    }
+
+    async delete(id) {
+        await impl.emitEvent(tx, this.feedPath(id), { type: 'deleted', id })
     }
 }
 

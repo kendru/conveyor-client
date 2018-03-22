@@ -63,6 +63,14 @@ class EagerRepository extends Repository {
         return inst
     }
 
+    get indexPairs() {
+        return Object.keys(this.indexes)
+            .map(idxName => ([
+                this.indexes[idxName],
+                this.indexFns[idxName]
+            ]))
+    }
+
     createIndex(name, fn) {
         const idx = []
         this.indexFns[name] = fn
@@ -90,6 +98,9 @@ class EagerRepository extends Repository {
         
         if (isNew) {
             model = new this.ModelClass()
+        } else if (evt.data.type === 'deleted') {
+            dbTools.removeFromAll(thi.table, this.indexPairs, model)
+            return
         } else {
             // Remove from existing indexes
             // TODO: only rewrite in index for indexes that actually change, not every index
@@ -105,8 +116,6 @@ class EagerRepository extends Repository {
         // (re-)add to indexes with possibly updated values
         idxNames.forEach(idxName =>
             dbTools.idxInsert(this.indexes[idxName], model, this.indexFns[idxName]))
-
-        return model
     }
 
     async fetch(id) {

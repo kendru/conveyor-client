@@ -39,7 +39,7 @@ class User extends Model {
 }
 
 const c = Client('localhost', 3000, false);
-const userRepo = new Repository(c, 'User', '/test9/users');
+const userRepo = new Repository(c, 'User', '/test9/users', User);
 
 (async () => {
     const userId = 1;
@@ -55,6 +55,6 @@ const userRepo = new Repository(c, 'User', '/test9/users');
     user.getOlder(); // User not saved after this
     console.log(user.introduce());
 
-    const fetchedUser = await userRepo.fetch(userId, User);
+    const fetchedUser = await userRepo.fetch(userId);
     console.log(fetchedUser.introduce());
 })();
