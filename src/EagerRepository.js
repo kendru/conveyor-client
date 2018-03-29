@@ -99,7 +99,7 @@ class EagerRepository extends Repository {
         if (isNew) {
             model = new this.ModelClass()
         } else if (evt.data.type === 'deleted') {
-            dbTools.removeFromAll(thi.table, this.indexPairs, model)
+            dbTools.removeFromAll(this.table, this.indexPairs, model)
             return
         } else {
             // Remove from existing indexes

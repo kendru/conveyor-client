@@ -89,7 +89,7 @@ class Repository {
     }
 
     async delete(id) {
-        await impl.emitEvent(tx, this.feedPath(id), { type: 'deleted', id })
+        await impl.emitEvent(this[connection_], this.feedPath(id), { type: 'deleted', id })
     }
 }
 
