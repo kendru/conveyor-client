@@ -1,6 +1,15 @@
 const request = require('request-promise')
 const Trie = require('ds-trie')
 
+const DEFAULT_MAX_EVENTS_PER_BATCH = 20
+
+function* chunk(xs, batchSize) {
+    const clone = array.slice(0)
+    while (clone.length > 0) {
+        yield clone.splice(0, size)
+    }
+}
+
 function maybeStripSlash(feed) {
     return (feed.charAt(0) === '/') ? feed.substring(1) : feed
 }
@@ -73,7 +82,8 @@ function connection(host, port, isSecure) {
         host, port, isSecure,
         baseUrl: `${proto}://${host}:${port}`,
         subscribers: new Trie(),
-        webhookUrl: null
+        webhookUrl: null,
+        maxEventsPerBatch: DEFAULT_MAX_EVENTS_PER_BATCH
     }
 }
 
@@ -91,7 +101,7 @@ async function createFeed(conn, feed) {
 
 async function emitToSubscribers(conn, event) {
     const path = maybeStripSlash(event.feed).split('/')
-    const subscribers = conn.subscribers.search(path)
+    const subscribers = conn.subscribers.collect(path)
     await Promise.all(subscribers.map(callback => callback(event)))
 }
 
@@ -117,7 +127,8 @@ async function cancelAllSubscriptionWebhook(conn) {
 
 async function subscribe(conn, feed, callback) {
     const path = maybeStripSlash(feed).split('/')
-    if (conn.webhookUrl && conn.subscribers.search(path).length === 0) {
+
+    if (conn.webhookUrl) {
         await registerSubscriptionWebhook(conn, feed)
     }
     conn.subscribers.addElement(path, callback)
@@ -140,7 +151,7 @@ async function unsubscribe(conn, feed, callback) {
 
 /**
  * Register a subscription registration implementation
- * 
+ *
  * @param conn connection
  * @param impl {Function} Factory function that takes the following functions
  * as positional arguments:
@@ -201,6 +212,25 @@ async function withTransaction(conn, fn) {
     await httpPost(transactionActionsUrl(conn.baseUrl, txId), { action })
 }
 
+/**
+ * Emit a batch of events as a single transaction
+ *
+ * @param {Connection} conn Conveyor connection
+ * @param {array} events Array of objects with `feed` and `event` keys
+ */
+async function emitEvents(conn, events) {
+    await withTransaction(conn, async (tx) => {
+        for (let batch of chunk(events, conn.maxEventsPerBatch)) {
+            await Promise.all(batch.map(async ({ feed, event }) => {
+                if (typeof feed === 'undefined' || typeof event === 'undefined') {
+                    throw new Error('Each element in a emitEvents array must have `feed` and `event` properties')
+                }
+                await emitEvent(tx, feed, event)
+            }))
+        }
+    })
+}
+
 module.exports = {
     connection,
     createFeed,
@@ -210,8 +240,6 @@ module.exports = {
     registerSubscriptionImpl,
     getEvents,
     emitEvent,
-    // TODO: Add support for emitting multiple events to the same feed
-    // inside Conveyor. Internally, this should wrap all inserts in a
-    // transaction. Then, export an 'emitEvents' function here
+    emitEvents,
     withTransaction
 }

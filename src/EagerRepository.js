@@ -40,7 +40,7 @@ class EagerRepository extends Repository {
         const inst = new EagerRepository(connectionOrClient, name, basePath, ModelClass, privateToken_)
         
         impl.subscribe(inst.connection, inst.basePath, (event) => {
-            if (!hasFetched) {
+            if (!inst.hasFetched) {
                 buffered.push(event)
                 return
             }
