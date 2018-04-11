@@ -47,9 +47,9 @@ function parseIdFromLocation(loc, asInt = false) {
     return asInt ? parseInt(id) : id
 }
 
-async function httpGet(url) {
+async function httpGet(uri) {
     return await request({
-        url,
+        uri,
         method: 'GET',
         json: true,
         headers: {
@@ -58,9 +58,9 @@ async function httpGet(url) {
     })
 }
 
-async function reqForMethod(method, url, body, opts) {
+async function reqForMethod(method, uri, body, opts) {
     const req = Object.assign({
-        url,
+        uri,
         method,
         headers: {
             'Accept': 'application/json'
@@ -75,12 +75,12 @@ async function reqForMethod(method, url, body, opts) {
     return req
 }
 
-async function httpPost(url, body = null, opts = {}) {
-    return await request(reqForMethod('POST', url, body, opts))
+async function httpPost(uri, body = null, opts = {}) {
+    return await request(reqForMethod('POST', uri, body, opts))
 }
 
-async function httpDelete(url, body = null, opts = {}) {
-    return await request(reqForMethod('DELETE', url, body, opts))
+async function httpDelete(uri, body = null, opts = {}) {
+    return await request(reqForMethod('DELETE', uri, body, opts))
 }
 
 function connection(host, port, isSecure) {
