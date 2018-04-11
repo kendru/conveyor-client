@@ -58,7 +58,7 @@ async function httpGet(uri) {
     })
 }
 
-async function reqForMethod(method, uri, body, opts) {
+function reqForMethod(method, uri, body, opts) {
     const req = Object.assign({
         uri,
         method,
