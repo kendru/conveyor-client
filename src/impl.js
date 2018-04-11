@@ -58,10 +58,10 @@ async function httpGet(url) {
     })
 }
 
-async function httpPost(url, body = null, opts = {}) {
+async function reqForMethod(method, url, body, opts) {
     const req = Object.assign({
         url,
-        method: 'POST',
+        method,
         headers: {
             'Accept': 'application/json'
         }
@@ -72,7 +72,15 @@ async function httpPost(url, body = null, opts = {}) {
         req.headers['Content-Type'] = 'application/json'
     }
 
-    return await request(req)
+    return req
+}
+
+async function httpPost(url, body = null, opts = {}) {
+    return await request(reqForMethod('POST', url, body, opts))
+}
+
+async function httpDelete(url, body = null, opts = {}) {
+    return await request(reqForMethod('DELETE', url, body, opts))
 }
 
 function connection(host, port, isSecure) {
