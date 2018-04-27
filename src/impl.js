@@ -136,7 +136,7 @@ async function cancelAllSubscriptionWebhook(conn) {
 async function subscribe(conn, feed, callback) {
     const path = maybeStripSlash(feed).split('/')
 
-    if (conn.webhookUrl) {
+    if (conn.webhookUrl && !conn.subscribers.contains(path)) {
         await registerSubscriptionWebhook(conn, feed)
     }
     conn.subscribers.addElement(path, callback)
